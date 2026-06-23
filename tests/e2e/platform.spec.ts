@@ -6,7 +6,8 @@ test.describe('platform grouping', () => {
 
     const link = page.getByRole('link').filter({ hasText: 'HackingClub' });
     await expect(link).toBeVisible();
-    await expect(link).toContainText('1 writeup');
+    // Robust to the actual number of HackingClub writeups (singular/plural).
+    await expect(link).toContainText(/\d+ writeups?/);
 
     await link.click();
     await expect(page).toHaveURL(/\/platform\/hackingclub$/);

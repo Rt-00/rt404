@@ -1,0 +1,55 @@
+---
+import { getPlatform } from '../lib/platforms';
+import { withBase } from '../lib/url';
+
+interface Props {
+  platform: string;
+  /** When true, wraps the badge in a link to the platform page. */
+  link?: boolean;
+  class?: string;
+}
+
+const { platform, link = false, class: className } = Astro.props;
+const meta = getPlatform(platform);
+const name = meta?.name ?? platform;
+const color = meta?.color ?? '#94a3b8';
+
+const badgeStyle = `color:${color};border-color:color-mix(in srgb, ${color} 40%, transparent);background-color:color-mix(in srgb, ${color} 12%, transparent)`;
+const href = withBase(`/platform/${platform}`);
+---
+
+{
+  link && (
+    <a href={href} class:list={['inline-flex hover:opacity-80', className]}>
+      <span
+        class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium"
+        style={badgeStyle}
+      >
+        <span
+          class="size-1.5 rounded-full"
+          style={`background-color:${color}`}
+          aria-hidden="true"
+        />
+        {name}
+      </span>
+    </a>
+  )
+}
+{
+  !link && (
+    <span
+      class:list={[
+        'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium',
+        className,
+      ]}
+      style={badgeStyle}
+    >
+      <span
+        class="size-1.5 rounded-full"
+        style={`background-color:${color}`}
+        aria-hidden="true"
+      />
+      {name}
+    </span>
+  )
+}

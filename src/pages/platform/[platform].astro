@@ -1,0 +1,40 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Prompt from '../../components/Prompt.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import PlatformBadge from '../../components/PlatformBadge.astro';
+import { visibleEntries } from '../../lib/collection';
+import { groupByPlatform } from '../../lib/group';
+import { platformName } from '../../lib/platforms';
+
+export async function getStaticPaths() {
+  const all = await getCollection('writeups');
+  const groups = groupByPlatform(visibleEntries(all, import.meta.env.DEV));
+  return groups.map((g) => ({
+    params: { platform: g.platform },
+    props: { group: g },
+  }));
+}
+
+const { group } = Astro.props;
+const name = platformName(group.platform);
+---
+
+<BaseLayout title={name} description={`Writeups de CTF da plataforma ${name}.`}>
+  <Prompt class="mb-4 block" command={`ls writeups/ | grep ${group.platform}`} />
+
+  <header class="mb-6 flex flex-wrap items-center gap-3">
+    <h1 class="text-2xl font-bold text-foreground">
+      <span class="text-primary">#</span>{' '}{name}
+    </h1>
+    <PlatformBadge platform={group.platform} />
+    <span class="text-sm text-muted-foreground">
+      {group.count} writeup{group.count === 1 ? '' : 's'}
+    </span>
+  </header>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    {group.entries.map((w) => <ArticleCard id={w.id} data={w.data} />)}
+  </div>
+</BaseLayout>

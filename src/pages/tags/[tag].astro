@@ -1,0 +1,36 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Prompt from '../../components/Prompt.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import { visibleEntries } from '../../lib/collection';
+import { collectTags, entriesForTag } from '../../lib/group';
+
+export async function getStaticPaths() {
+  const all = await getCollection('writeups');
+  const visible = visibleEntries(all, import.meta.env.DEV);
+  return collectTags(visible).map((t) => ({
+    params: { tag: t.tag },
+    props: { tag: t.tag, entries: entriesForTag(visible, t.tag) },
+  }));
+}
+
+const { tag, entries } = Astro.props;
+---
+
+<BaseLayout title={`#${tag}`} description={`Writeups com a tag ${tag}.`}>
+  <Prompt class="mb-4 block" command={`grep -rl "#${tag}" writeups/`} />
+
+  <header class="mb-6 flex flex-wrap items-baseline gap-3">
+    <h1 class="text-2xl font-bold text-foreground">
+      <span class="text-primary">#</span>{tag}
+    </h1>
+    <span class="text-sm text-muted-foreground">
+      {entries.length} writeup{entries.length === 1 ? '' : 's'}
+    </span>
+  </header>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    {entries.map((w) => <ArticleCard id={w.id} data={w.data} />)}
+  </div>
+</BaseLayout>

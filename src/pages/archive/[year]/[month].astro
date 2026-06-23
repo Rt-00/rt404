@@ -1,0 +1,36 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Prompt from '../../../components/Prompt.astro';
+import ArticleCard from '../../../components/ArticleCard.astro';
+import { visibleEntries } from '../../../lib/collection';
+import { groupByMonthYear } from '../../../lib/group';
+
+export async function getStaticPaths() {
+  const all = await getCollection('writeups');
+  const months = groupByMonthYear(visibleEntries(all, import.meta.env.DEV));
+  return months.map((m) => ({
+    params: { year: String(m.year), month: m.slug },
+    props: { group: m },
+  }));
+}
+
+const { group } = Astro.props;
+---
+
+<BaseLayout title={group.label} description={`Writeups de ${group.label}.`}>
+  <Prompt class="mb-4 block" command={`ls archive/${group.year}/${group.slug}/`} />
+
+  <header class="mb-6 flex flex-wrap items-baseline gap-3">
+    <h1 class="text-2xl font-bold capitalize text-foreground">
+      <span class="text-primary">#</span>{' '}{group.label}
+    </h1>
+    <span class="text-sm text-muted-foreground">
+      {group.count} writeup{group.count === 1 ? '' : 's'}
+    </span>
+  </header>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    {group.entries.map((w) => <ArticleCard id={w.id} data={w.data} />)}
+  </div>
+</BaseLayout>

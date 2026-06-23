@@ -1,0 +1,40 @@
+---
+import Prompt from './Prompt.astro';
+
+/**
+ * A framed "terminal window" with a traffic-light titlebar.
+ * Optionally renders a command prompt line at the top of the body.
+ */
+interface Props {
+  /** Title shown in the window's titlebar (e.g. a filename). */
+  title?: string;
+  /** If set, renders a `$ {command}` prompt line at the top of the body. */
+  command?: string;
+  class?: string;
+}
+
+const { title = 'rt404', command, class: className } = Astro.props;
+---
+
+<section
+  class:list={[
+    'overflow-hidden rounded-lg border border-border bg-card shadow-xl shadow-black/40',
+    className,
+  ]}
+>
+  <div class="flex items-center gap-2 border-b border-border bg-muted/40 px-4 py-2">
+    <span class="flex gap-1.5" aria-hidden="true">
+      <span class="size-3 rounded-full bg-term-red"></span>
+      <span class="size-3 rounded-full bg-term-amber"></span>
+      <span class="size-3 rounded-full bg-term-green"></span>
+    </span>
+    <span class="flex-1 truncate text-center text-xs text-muted-foreground">
+      {title}
+    </span>
+    <span class="w-10" aria-hidden="true"></span>
+  </div>
+  <div class="p-4 sm:p-6">
+    {command && <Prompt class="mb-4 block" command={command} />}
+    <slot />
+  </div>
+</section>

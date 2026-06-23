@@ -1,0 +1,21 @@
+---
+/**
+ * A `label: value` metadata pair with a consistent, structural gap.
+ * Uses flex (not source whitespace) so the spacing never collapses — the
+ * label and value stay evenly spaced everywhere it's used.
+ */
+interface Props {
+  /** Label text, e.g. "date:" (the colon is part of the label). */
+  label: string;
+  /** Tailwind color class for the value (defaults to foreground). */
+  valueClass?: string;
+  class?: string;
+}
+
+const { label, valueClass = 'text-foreground', class: className } = Astro.props;
+---
+
+<span class:list={['inline-flex items-baseline gap-1.5', className]}>
+  <span class="text-term-cyan">{label}</span>
+  <span class={valueClass}><slot /></span>
+</span>

@@ -1,0 +1,40 @@
+---
+/**
+ * A terminal prompt line: `user@host:dir$ command`.
+ * Used for headings and decorative command lines across the site.
+ */
+interface Props {
+  user?: string;
+  host?: string;
+  dir?: string;
+  command?: string;
+  /** Show a blinking cursor after the command. */
+  cursor?: boolean;
+  class?: string;
+  id?: string;
+}
+
+const {
+  user = 'visitor',
+  host = 'rt404',
+  dir = '~',
+  command,
+  cursor = false,
+  class: className,
+  id,
+} = Astro.props;
+---
+
+<span id={id} class:list={['font-mono text-sm select-none', className]}>
+  <span class="text-term-green">{user}@{host}</span><span class="text-muted-foreground"
+    >:</span
+  ><span class="text-term-cyan">{dir}</span><span class="text-muted-foreground">$</span>{
+    (command || cursor) && ' '
+  }
+  {
+    command && (
+      <span class:list={['text-foreground', { 'cursor-blink': cursor }]}>{command}</span>
+    )
+  }
+  {!command && cursor && <span class="cursor-blink" />}
+</span>

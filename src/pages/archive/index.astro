@@ -1,0 +1,51 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Prompt from '../../components/Prompt.astro';
+import { visibleEntries } from '../../lib/collection';
+import { groupByYear } from '../../lib/group';
+import { withBase } from '../../lib/url';
+
+const all = await getCollection('writeups');
+const years = groupByYear(visibleEntries(all, import.meta.env.DEV));
+---
+
+<BaseLayout title="Arquivo" description="Writeups de CTF organizados por mês e ano.">
+  <Prompt class="mb-4 block" command="ls -R archive/" />
+
+  <h1 class="mb-6 text-2xl font-bold text-foreground">
+    <span class="text-primary">#</span> Arquivo
+  </h1>
+
+  {
+    years.length === 0 ? (
+      <p class="text-muted-foreground">Nenhum writeup publicado ainda.</p>
+    ) : (
+      <div class="space-y-8">
+        {years.map((y) => (
+          <section>
+            <h2 class="mb-3 flex items-baseline gap-2 text-xl font-bold text-term-cyan">
+              {y.year}
+              <span class="text-sm font-normal text-muted-foreground">
+                {y.count} writeup{y.count === 1 ? '' : 's'}
+              </span>
+            </h2>
+            <ul class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {y.months.map((m) => (
+                <li>
+                  <a
+                    href={withBase(`/archive/${m.year}/${m.slug}`)}
+                    class="flex items-center justify-between rounded-md border border-border bg-card/60 px-3 py-2 text-sm transition-colors hover:border-primary/50"
+                  >
+                    <span class="capitalize text-foreground">{m.label}</span>
+                    <span class="text-muted-foreground">{m.count}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+    )
+  }
+</BaseLayout>

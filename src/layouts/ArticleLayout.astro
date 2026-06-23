@@ -1,0 +1,219 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import TerminalWindow from '../components/TerminalWindow.astro';
+import PlatformBadge from '../components/PlatformBadge.astro';
+import MetaItem from '../components/MetaItem.astro';
+import Prompt from '../components/Prompt.astro';
+import { formatDate, isoDate, difficultyLabel } from '../lib/format';
+import { withBase } from '../lib/url';
+import { blockFor } from '../lib/redact.mjs';
+import type { WriteupData } from '../lib/schema';
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  data: WriteupData;
+  headings: Heading[];
+  /** File path within the collection, e.g. "hackingclub/nova". */
+  id: string;
+}
+
+const { data, headings, id } = Astro.props;
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+
+const difficultyColor: Record<string, string> = {
+  easy: 'text-term-green',
+  medium: 'text-term-amber',
+  hard: 'text-term-red',
+  insane: 'text-term-magenta',
+};
+---
+
+<BaseLayout title={data.title} description={data.description}>
+  <Prompt class="mb-4 block" command={`cat writeups/${id}.md`} />
+
+  <TerminalWindow title={`${id}.md`} class="mb-8">
+    <header class="space-y-4">
+      <h1 class="text-2xl font-bold text-foreground sm:text-3xl">
+        <span class="text-primary">#</span>{' '}{data.title}
+      </h1>
+
+      <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+        <PlatformBadge platform={data.platform} link />
+        <MetaItem label="date:">
+          <time datetime={isoDate(data.date)}>{formatDate(data.date)}</time>
+        </MetaItem>
+        <MetaItem
+          label="difficulty:"
+          valueClass={difficultyColor[data.difficulty] ?? 'text-foreground'}
+        >
+          {difficultyLabel(data.difficulty)}
+        </MetaItem>
+        {data.category && <MetaItem label="category:">{data.category}</MetaItem>}
+      </div>
+
+      {
+        (data.target || data.flag) && (
+          <dl class="grid gap-1.5 rounded-md border border-border bg-muted/30 p-3 text-sm">
+            {data.target && (
+              <div class="flex items-center gap-3">
+                <dt class="w-16 shrink-0 text-term-cyan">target</dt>
+                <dd class="text-foreground">{data.target}</dd>
+              </div>
+            )}
+            {data.flag && (
+              <div class="flex items-center gap-3">
+                <dt class="w-16 shrink-0 text-term-cyan">flag</dt>
+                <dd>
+                  <span
+                    class="flag-redacted"
+                    title="flag oculta"
+                    aria-label="flag oculta"
+                  >
+                    {blockFor(data.flag)}
+                  </span>
+                </dd>
+              </div>
+            )}
+          </dl>
+        )
+      }
+
+      {
+        data.tags.length > 0 && (
+          <ul class="flex flex-wrap gap-2">
+            {data.tags.map((tag) => (
+              <li>
+                <a
+                  href={withBase(`/tags/${tag}`)}
+                  class="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-term-cyan hover:text-term-cyan"
+                >
+                  #{tag}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </header>
+  </TerminalWindow>
+
+  <div class="gap-8 lg:grid lg:grid-cols-[1fr_16rem]">
+    <article
+      class="prose prose-invert max-w-none prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:text-primary prose-a:text-term-cyan prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-code:rounded prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:text-term-amber prose-code:before:content-none prose-code:after:content-none prose-pre:rounded-lg prose-pre:border prose-pre:border-border prose-th:text-foreground"
+    >
+      <slot />
+    </article>
+
+    {
+      toc.length > 0 && (
+        <aside class="order-first mb-8 lg:order-none lg:mb-0">
+          <nav
+            aria-label="Índice"
+            class="rounded-lg border border-border bg-card/60 p-4 lg:sticky lg:top-8"
+          >
+            <p class="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+              # índice
+            </p>
+            <ul
+              data-toc
+              class="max-h-[calc(100vh-9rem)] space-y-1 overflow-y-auto text-sm"
+            >
+              {toc.map((h) => (
+                <li>
+                  <a
+                    href={`#${h.slug}`}
+                    class:list={[
+                      'toc-link block border-l-2 border-transparent leading-snug text-muted-foreground transition-colors hover:text-term-cyan',
+                      h.depth === 3 ? 'pl-6' : 'pl-3',
+                    ]}
+                  >
+                    {h.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
+      )
+    }
+  </div>
+
+  <script>
+    function initTocScrollSpy() {
+      const nav = document.querySelector('nav[aria-label="Índice"]');
+      if (!nav) return;
+
+      const links = Array.from(
+        nav.querySelectorAll<HTMLAnchorElement>('a.toc-link[href^="#"]'),
+      );
+      if (!links.length) return;
+
+      const list = nav.querySelector<HTMLElement>('[data-toc]');
+      const linkById = new Map<string, HTMLAnchorElement>();
+      for (const link of links) {
+        const id = decodeURIComponent(link.hash.slice(1));
+        if (id) linkById.set(id, link);
+      }
+
+      const headings = Array.from(linkById.keys())
+        .map((id) => document.getElementById(id))
+        .filter((el): el is HTMLElement => el !== null);
+      if (!headings.length) return;
+
+      let current: string | null = null;
+      const setActive = (id: string | null) => {
+        if (id === current) return;
+        current = id;
+        for (const [hid, link] of linkById) {
+          const on = hid === id;
+          link.classList.toggle('toc-active', on);
+          if (on) {
+            link.setAttribute('aria-current', 'true');
+            // Keep the active item visible inside a scrollable TOC.
+            if (list) {
+              const lb = link.getBoundingClientRect();
+              const cb = list.getBoundingClientRect();
+              if (lb.top < cb.top) list.scrollTop -= cb.top - lb.top + 8;
+              else if (lb.bottom > cb.bottom) list.scrollTop += lb.bottom - cb.bottom + 8;
+            }
+          } else {
+            link.removeAttribute('aria-current');
+          }
+        }
+      };
+
+      const visible = new Set<string>();
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) visible.add(entry.target.id);
+            else visible.delete(entry.target.id);
+          }
+          // Prefer the topmost heading currently in the activation band.
+          const topMost = headings.find((h) => visible.has(h.id));
+          if (topMost) {
+            setActive(topMost.id);
+            return;
+          }
+          // Otherwise highlight the last heading scrolled past the band.
+          let above: string | null = null;
+          for (const h of headings) {
+            if (h.getBoundingClientRect().top <= 100) above = h.id;
+            else break;
+          }
+          setActive(above ?? headings[0].id);
+        },
+        { rootMargin: '-80px 0px -70% 0px', threshold: 0 },
+      );
+
+      headings.forEach((h) => observer.observe(h));
+    }
+
+    initTocScrollSpy();
+  </script>
+</BaseLayout>

@@ -1,0 +1,21 @@
+---
+import { getCollection, render } from 'astro:content';
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import { publishedSorted } from '../../lib/collection';
+
+export async function getStaticPaths() {
+  const writeups = await getCollection('writeups');
+  const visible = publishedSorted(writeups, import.meta.env.DEV);
+  return visible.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+---
+
+<ArticleLayout data={entry.data} headings={headings} id={entry.id}>
+  <Content />
+</ArticleLayout>

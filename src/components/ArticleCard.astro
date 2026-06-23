@@ -1,0 +1,59 @@
+---
+import PlatformBadge from './PlatformBadge.astro';
+import { formatDate, isoDate, difficultyLabel } from '../lib/format';
+import { withBase } from '../lib/url';
+import type { WriteupData } from '../lib/schema';
+
+interface Props {
+  id: string;
+  data: WriteupData;
+}
+
+const { id, data } = Astro.props;
+const href = withBase(`/writeups/${id}`);
+
+const difficultyColor: Record<string, string> = {
+  easy: 'text-term-green',
+  medium: 'text-term-amber',
+  hard: 'text-term-red',
+  insane: 'text-term-magenta',
+};
+---
+
+<article
+  class="group rounded-lg border border-border bg-card/60 p-4 transition-colors hover:border-primary/50"
+>
+  <div class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+    <PlatformBadge platform={data.platform} />
+    <time datetime={isoDate(data.date)} class="text-muted-foreground">
+      {formatDate(data.date)}
+    </time>
+    <span class={difficultyColor[data.difficulty] ?? 'text-foreground'}>
+      [{difficultyLabel(data.difficulty)}]
+    </span>
+  </div>
+
+  <h3 class="text-lg font-bold">
+    <a href={href} class="text-foreground transition-colors group-hover:text-primary">
+      <span class="text-primary">$</span>{' '}{data.title}
+    </a>
+  </h3>
+
+  {
+    data.description && (
+      <p class="mt-1 line-clamp-2 text-sm text-muted-foreground">{data.description}</p>
+    )
+  }
+
+  {
+    data.tags.length > 0 && (
+      <ul class="mt-3 flex flex-wrap gap-1.5">
+        {data.tags.slice(0, 5).map((tag) => (
+          <li class="rounded border border-border px-1.5 py-0.5 text-[11px] text-muted-foreground">
+            #{tag}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</article>

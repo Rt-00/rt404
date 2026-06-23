@@ -1,0 +1,62 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TerminalWindow from '../components/TerminalWindow.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import MetaItem from '../components/MetaItem.astro';
+import Prompt from '../components/Prompt.astro';
+import { publishedSorted } from '../lib/collection';
+import { withBase } from '../lib/url';
+
+const all = await getCollection('writeups');
+const writeups = publishedSorted(all, import.meta.env.DEV);
+const platformCount = new Set(writeups.map((w) => w.data.platform)).size;
+---
+
+<BaseLayout>
+  <TerminalWindow title="rt404 — ~/writeups" command="whoami" class="mb-10">
+    <div class="space-y-3">
+      <p class="text-2xl font-bold text-primary sm:text-3xl">rt404</p>
+      <p class="max-w-prose text-sm text-muted-foreground sm:text-base">
+        Writeups de CTF — reconhecimento, exploração e pós-exploração. Organizados por
+        plataforma e por data.
+      </p>
+      <div class="flex flex-wrap items-center gap-x-5 gap-y-2 pt-2 text-sm">
+        <MetaItem label="writeups:">{writeups.length}</MetaItem>
+        <MetaItem label="platforms:">{platformCount}</MetaItem>
+        <span class="h-4 w-px bg-border" aria-hidden="true"></span>
+        <a
+          class="text-muted-foreground transition-colors hover:text-term-cyan"
+          href={withBase('/platform')}
+        >
+          ls platforms/
+        </a>
+        <a
+          class="text-muted-foreground transition-colors hover:text-term-cyan"
+          href={withBase('/archive')}
+        >
+          cd archive/
+        </a>
+      </div>
+    </div>
+  </TerminalWindow>
+
+  <section aria-labelledby="latest">
+    <Prompt id="latest" class="mb-4 block" command="ls -lt writeups/" />
+
+    {
+      writeups.length === 0 ? (
+        <p class="text-muted-foreground">
+          Nenhum writeup publicado ainda. Adicione um arquivo em{' '}
+          <code class="text-term-amber">src/content/writeups/</code>.
+        </p>
+      ) : (
+        <div class="grid gap-4 sm:grid-cols-2">
+          {writeups.map((w) => (
+            <ArticleCard id={w.id} data={w.data} />
+          ))}
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

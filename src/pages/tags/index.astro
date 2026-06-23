@@ -1,0 +1,42 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Prompt from '../../components/Prompt.astro';
+import { visibleEntries } from '../../lib/collection';
+import { collectTags } from '../../lib/group';
+import { withBase } from '../../lib/url';
+
+const all = await getCollection('writeups');
+const tags = collectTags(visibleEntries(all, import.meta.env.DEV));
+---
+
+<BaseLayout title="Tags" description="Writeups de CTF filtrados por tag.">
+  <Prompt class="mb-4 block" command="grep -rl tags/" />
+
+  <h1 class="mb-6 text-2xl font-bold text-foreground">
+    <span class="text-primary">#</span> Tags
+  </h1>
+
+  {
+    tags.length === 0 ? (
+      <p class="text-muted-foreground">Nenhuma tag ainda.</p>
+    ) : (
+      <ul class="flex flex-wrap gap-2">
+        {tags.map((t) => (
+          <li>
+            <a
+              href={withBase(`/tags/${t.tag}`)}
+              class="inline-flex items-baseline gap-2 rounded-md border border-border px-2.5 py-1 text-sm text-muted-foreground transition-colors hover:border-term-cyan hover:text-term-cyan"
+            >
+              <span>
+                <span class="text-primary">#</span>
+                {t.tag}
+              </span>
+              <span class="text-xs text-muted-foreground/70">{t.count}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</BaseLayout>

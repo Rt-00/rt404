@@ -1,0 +1,111 @@
+---
+import '../styles/global.css';
+import Prompt from '../components/Prompt.astro';
+import { withBase } from '../lib/url';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'rt404',
+  description = 'Writeups de CTF — TryHackMe, Hack The Box, HackingClub e mais.',
+} = Astro.props;
+
+const fullTitle = title === 'rt404' ? title : `${title} · rt404`;
+
+const canonical = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : Astro.url.pathname;
+
+const nav = [
+  { label: '~/', href: withBase('/'), title: 'home' },
+  { label: 'ls platforms/', href: withBase('/platform'), title: 'plataformas' },
+  { label: 'cd archive/', href: withBase('/archive'), title: 'arquivo' },
+  { label: 'grep tags/', href: withBase('/tags'), title: 'tags' },
+];
+
+const year = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="rt404"
+      href={withBase('/rss.xml')}
+    />
+    <title>{fullTitle}</title>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="rt404" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-primary focus:px-3 focus:py-1 focus:text-primary-foreground"
+    >
+      pular para o conteúdo
+    </a>
+
+    <header class="border-b border-border bg-card/60 backdrop-blur">
+      <div
+        class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3"
+      >
+        <a href={withBase('/')} class="group flex items-center gap-2">
+          <span class="text-lg font-bold text-primary">rt</span><span
+            class="text-lg font-bold text-foreground">404</span
+          >
+          <Prompt class="hidden sm:inline" command="cat writeups/*" cursor />
+        </a>
+        <nav aria-label="Navegação principal">
+          <ul class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+            {
+              nav.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    title={item.title}
+                    class="text-muted-foreground transition-colors hover:text-term-cyan"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+      <slot />
+    </main>
+
+    <footer class="border-t border-border bg-card/60">
+      <div
+        class="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
+      >
+        <Prompt user="root" dir="/var/log" command={`echo "© ${year} rt404"`} />
+        <span class="text-muted-foreground/70">
+          built with astro · tailwind · shadcn
+        </span>
+      </div>
+    </footer>
+  </body>
+</html>

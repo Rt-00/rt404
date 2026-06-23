@@ -2,7 +2,7 @@
 title: "DataFlow BI CTF Challenge"
 platform: hackingclub
 date: 2026-06-23
-difficulty: hard
+difficulty: medium
 category: "Web Exploitation / H2 JDBC Injection"
 description: "De um falso Metabase em Clojure ao arquivo /flag.txt: importação de YAML que planta um subname JDBC malicioso e leitura arbitrária de arquivos via H2 INIT + RUNSCRIPT."
 tags: [clojure, h2, jdbc-injection, snakeyaml, metabase, file-read, serialization, ctf]

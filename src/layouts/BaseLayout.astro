@@ -75,9 +75,9 @@ const year = new Date().getFullYear();
         class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3"
       >
         <a href={withBase('/')} class="group flex items-center gap-2">
-          <span class="text-lg font-bold text-primary">rt</span><span
-            class="text-lg font-bold text-foreground">404</span
-          >
+          <span class="text-lg font-bold">
+            <span class="text-primary">rt</span><span class="text-foreground">404</span>
+          </span>
           <Prompt class="hidden sm:inline" command="cat writeups/*" cursor />
         </a>
         <nav aria-label="Navegação principal">

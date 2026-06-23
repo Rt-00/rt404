@@ -61,6 +61,8 @@ const year = new Date().getFullYear();
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
+
+    <slot name="head" />
   </head>
   <body class="flex min-h-screen flex-col">
     <a

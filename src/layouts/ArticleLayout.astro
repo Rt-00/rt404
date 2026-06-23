@@ -7,6 +7,7 @@ import Prompt from '../components/Prompt.astro';
 import { formatDate, isoDate, difficultyLabel } from '../lib/format';
 import { withBase } from '../lib/url';
 import { blockFor } from '../lib/redact.mjs';
+import { platformName } from '../lib/platforms';
 import type { WriteupData } from '../lib/schema';
 
 interface Heading {
@@ -25,6 +26,68 @@ interface Props {
 const { data, headings, id } = Astro.props;
 const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
 
+const platform = platformName(data.platform);
+
+// Richer <title> for search: pull in "Writeup" + the platform name, which the
+// bare article title ("NØVA CTF Challenge") lacks.
+const seoTitle = `${data.title} — Writeup ${platform}`;
+
+// Absolute URL helper for structured data (Astro.site is set in build).
+// Normalise to a trailing slash so breadcrumb URLs match the canonicals.
+const abs = (path: string) => {
+  const url = Astro.site ? new URL(withBase(path), Astro.site).href : withBase(path);
+  return url.endsWith('/') ? url : `${url}/`;
+};
+const pageUrl = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : Astro.url.pathname;
+
+// Search-friendly keywords: cover the stylised "NØVA" and the plain "Nova"
+// spelling people actually type, plus the platform and tags.
+const keywords = [
+  ...new Set([
+    data.title,
+    data.title.replace(/Ø/g, 'O'),
+    platform,
+    'writeup',
+    'CTF',
+    ...data.tags,
+  ]),
+];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'TechArticle',
+      headline: data.title,
+      name: data.title,
+      description: data.description ?? data.category ?? '',
+      inLanguage: 'pt-BR',
+      datePublished: isoDate(data.date),
+      dateModified: isoDate(data.date),
+      keywords: keywords.join(', '),
+      author: { '@type': 'Person', name: 'Rafael Toledo' },
+      publisher: { '@type': 'Organization', name: 'rt404' },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': pageUrl },
+      url: pageUrl,
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'rt404', item: abs('/') },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: platform,
+          item: abs(`/platform/${data.platform}`),
+        },
+        { '@type': 'ListItem', position: 3, name: data.title, item: pageUrl },
+      ],
+    },
+  ],
+};
+
 const difficultyColor: Record<string, string> = {
   easy: 'text-term-green',
   medium: 'text-term-amber',
@@ -33,7 +96,8 @@ const difficultyColor: Record<string, string> = {
 };
 ---
 
-<BaseLayout title={data.title} description={data.description}>
+<BaseLayout title={seoTitle} description={data.description}>
+  <script type="application/ld+json" slot="head" set:html={JSON.stringify(jsonLd)} />
   <Prompt class="mb-4 block" command={`cat writeups/${id}.md`} />
 
   <TerminalWindow title={`${id}.md`} class="mb-8">
